@@ -19,8 +19,6 @@ const currentDateEl = document.getElementById('currentDate');
 const temperatureEl = document.getElementById('temperature');
 const weatherConditionEl = document.getElementById('weatherCondition');
 const humidityEl = document.getElementById('humidity');
-const windSpeedEl = document.getElementById('windSpeed');
-const pressureEl = document.getElementById('pressure');
 const locationEl = document.getElementById('location');
 
 // Search Elements
@@ -40,7 +38,6 @@ const marineSearchBtn = document.getElementById('marineSearchBtn');
 // Marine Weather Elements
 const waveHeightEl = document.getElementById('waveHeight');
 const seaTemperatureEl = document.getElementById('seaTemperature');
-const marineWindSpeedEl = document.getElementById('marineWindSpeed');
 const marineEmptyState = document.getElementById('marineEmptyState');
 
 // Track active card
@@ -269,7 +266,7 @@ async function geocodeCity(cityName) {
  */
 async function fetchCurrentWeather(latitude, longitude) {
     try {
-        const url = `${API_BASE_URL}/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,surface_pressure&timezone=auto`;
+        const url = `${API_BASE_URL}/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code&timezone=auto`;
         const response = await fetch(url);
         
         if (!response.ok) {
@@ -323,7 +320,7 @@ async function fetchHistoricalWeather(latitude, longitude) {
  */
 async function fetchMarineWeather(latitude, longitude) {
     try {
-        const url = `${API_BASE_URL}/marine?latitude=${latitude}&longitude=${longitude}&hourly=wave_height,sea_surface_temperature,wind_wave_height&timezone=auto`;
+        const url = `${API_BASE_URL}/marine?latitude=${latitude}&longitude=${longitude}&hourly=wave_height,sea_surface_temperature&timezone=auto`;
         const response = await fetch(url);
         
         if (!response.ok) {
@@ -337,8 +334,7 @@ async function fetchMarineWeather(latitude, longitude) {
             const index = data.hourly.wave_height.length - 1;
             return {
                 waveHeight: data.hourly.wave_height[index],
-                seaTemperature: data.hourly.sea_surface_temperature[index],
-                windSpeed: data.hourly.wind_wave_height[index]
+                seaTemperature: data.hourly.sea_surface_temperature[index]
             };
         }
         
@@ -398,8 +394,6 @@ function displayCurrentWeather(data, location) {
     temperatureEl.textContent = Math.round(data.temperature_2m);
     weatherConditionEl.textContent = getWeatherCondition(data.weather_code);
     humidityEl.textContent = `${data.relative_humidity_2m}%`;
-    windSpeedEl.textContent = `${Math.round(data.wind_speed_10m)} km/h`;
-    pressureEl.textContent = `${Math.round(data.surface_pressure)} hPa`;
     
     const locationName = location.admin1 
         ? `${location.name}, ${location.admin1}, ${location.country}`
@@ -454,9 +448,6 @@ function displayMarineWeather(data) {
         : 'N/A';
     seaTemperatureEl.textContent = data.seaTemperature !== null 
         ? `${Math.round(data.seaTemperature)}°C` 
-        : 'N/A';
-    marineWindSpeedEl.textContent = data.windSpeed !== null 
-        ? `${data.windSpeed.toFixed(1)} m` 
         : 'N/A';
     
     marineEmptyState.style.display = 'none';
