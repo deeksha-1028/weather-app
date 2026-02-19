@@ -6,8 +6,6 @@ const API_BASE_URL = 'https://api.open-meteo.com/v1';
 const GEOCODING_API_URL = 'https://geocoding-api.open-meteo.com/v1/search';
 
 // DOM Elements
-const cityInput = document.getElementById('cityInput');
-const searchBtn = document.getElementById('searchBtn');
 const errorMessage = document.getElementById('errorMessage');
 const loadingIndicator = document.getElementById('loadingIndicator');
 
@@ -25,16 +23,28 @@ const windSpeedEl = document.getElementById('windSpeed');
 const pressureEl = document.getElementById('pressure');
 const locationEl = document.getElementById('location');
 
-// Historical Weather Elements
+// Search Elements
+const currentSearch = document.getElementById('currentSearch');
+const currentCityInput = document.getElementById('currentCityInput');
+const currentSearchBtn = document.getElementById('currentSearchBtn');
+
+const historicalSearch = document.getElementById('historicalSearch');
+const historicalCityInput = document.getElementById('historicalCityInput');
+const historicalSearchBtn = document.getElementById('historicalSearchBtn');
 const historicalContentEl = document.getElementById('historicalContent');
+
+const marineSearch = document.getElementById('marineSearch');
+const marineCityInput = document.getElementById('marineCityInput');
+const marineSearchBtn = document.getElementById('marineSearchBtn');
 
 // Marine Weather Elements
 const waveHeightEl = document.getElementById('waveHeight');
 const seaTemperatureEl = document.getElementById('seaTemperature');
 const marineWindSpeedEl = document.getElementById('marineWindSpeed');
+const marineEmptyState = document.getElementById('marineEmptyState');
 
-// Default city for initial load
-const DEFAULT_CITY = 'London';
+// Track active card
+let activeCard = null;
 
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => {
@@ -42,62 +52,162 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDateTime();
     setInterval(updateDateTime, 1000);
 
-    // Event Listeners
-    searchBtn.addEventListener('click', handleSearch);
-    cityInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            handleSearch();
-        }
-    });
-
-    // Load default weather data on page load
-    loadDefaultWeather();
+    // Make cards clickable
+    setupCardInteractions();
 });
 
 /**
- * Load default weather data for initial display
+ * Setup click interactions for weather cards
  */
-async function loadDefaultWeather() {
-    // Set default city in input
-    cityInput.value = DEFAULT_CITY;
+function setupCardInteractions() {
+    // Current Weather Card
+    currentWeatherCard.addEventListener('click', (e) => {
+        if (e.target.closest('.card-search')) return; // Don't trigger if clicking inside search
+        toggleCardSearch('current');
+    });
     
-    // Show loading state
-    showLoading();
-    disableSearch(true);
+    currentSearchBtn.addEventListener('click', () => {
+        const cityName = currentCityInput.value.trim();
+        if (cityName) {
+            fetchWeatherForCard('current', cityName);
+        }
+    });
+    
+    currentCityInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const cityName = currentCityInput.value.trim();
+            if (cityName) {
+                fetchWeatherForCard('current', cityName);
+            }
+        }
+    });
 
+    // Historical Weather Card
+    historicalWeatherCard.addEventListener('click', (e) => {
+        if (e.target.closest('.card-search')) return;
+        toggleCardSearch('historical');
+    });
+    
+    historicalSearchBtn.addEventListener('click', () => {
+        const cityName = historicalCityInput.value.trim();
+        if (cityName) {
+            fetchWeatherForCard('historical', cityName);
+        }
+    });
+    
+    historicalCityInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const cityName = historicalCityInput.value.trim();
+            if (cityName) {
+                fetchWeatherForCard('historical', cityName);
+            }
+        }
+    });
+
+    // Marine Weather Card
+    marineWeatherCard.addEventListener('click', (e) => {
+        if (e.target.closest('.card-search')) return;
+        toggleCardSearch('marine');
+    });
+    
+    marineSearchBtn.addEventListener('click', () => {
+        const cityName = marineCityInput.value.trim();
+        if (cityName) {
+            fetchWeatherForCard('marine', cityName);
+        }
+    });
+    
+    marineCityInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const cityName = marineCityInput.value.trim();
+            if (cityName) {
+                fetchWeatherForCard('marine', cityName);
+            }
+        }
+    });
+}
+
+/**
+ * Toggle search input for a specific card
+ * @param {string} cardType - Type of card ('current', 'historical', 'marine')
+ */
+function toggleCardSearch(cardType) {
+    // Hide all search inputs first
+    currentSearch.style.display = 'none';
+    historicalSearch.style.display = 'none';
+    marineSearch.style.display = 'none';
+    
+    // Remove active state from all cards
+    currentWeatherCard.classList.remove('active');
+    historicalWeatherCard.classList.remove('active');
+    marineWeatherCard.classList.remove('active');
+    
+    // Show search for clicked card
+    if (cardType === 'current') {
+        currentSearch.style.display = 'flex';
+        currentWeatherCard.classList.add('active');
+        currentCityInput.focus();
+        activeCard = 'current';
+    } else if (cardType === 'historical') {
+        historicalSearch.style.display = 'flex';
+        historicalWeatherCard.classList.add('active');
+        historicalCityInput.focus();
+        activeCard = 'historical';
+    } else if (cardType === 'marine') {
+        marineSearch.style.display = 'flex';
+        marineWeatherCard.classList.add('active');
+        marineCityInput.focus();
+        activeCard = 'marine';
+    }
+}
+
+/**
+ * Fetch weather data for a specific card type
+ * @param {string} cardType - Type of card ('current', 'historical', 'marine')
+ * @param {string} cityName - Name of the city to search
+ */
+async function fetchWeatherForCard(cardType, cityName) {
+    hideError();
+    showLoading();
+    
     try {
-        // Geocode default city
-        const coordinates = await geocodeCity(DEFAULT_CITY);
+        // Geocode city name
+        const coordinates = await geocodeCity(cityName);
         
         if (!coordinates) {
-            throw new Error('Failed to load default weather data.');
+            throw new Error('City not found. Please check the spelling and try again.');
         }
 
-        // Fetch all weather data in parallel
-        const [currentData, historicalData, marineData] = await Promise.all([
-            fetchCurrentWeather(coordinates.latitude, coordinates.longitude),
-            fetchHistoricalWeather(coordinates.latitude, coordinates.longitude),
-            fetchMarineWeather(coordinates.latitude, coordinates.longitude)
-        ]);
-
-        // Display all data
-        displayCurrentWeather(currentData, coordinates);
-        displayHistoricalWeather(historicalData);
-        
-        // Show marine weather if available, otherwise hide the card
-        if (marineData && marineData.waveHeight !== null) {
-            displayMarineWeather(marineData);
-        } else {
-            marineWeatherCard.style.display = 'none';
+        if (cardType === 'current') {
+            const currentData = await fetchCurrentWeather(coordinates.latitude, coordinates.longitude);
+            displayCurrentWeather(currentData, coordinates);
+            currentSearch.style.display = 'none';
+            currentWeatherCard.classList.remove('active');
+        } 
+        else if (cardType === 'historical') {
+            const historicalData = await fetchHistoricalWeather(coordinates.latitude, coordinates.longitude);
+            displayHistoricalWeather(historicalData);
+            historicalSearch.style.display = 'none';
+            historicalWeatherCard.classList.remove('active');
+        } 
+        else if (cardType === 'marine') {
+            const marineData = await fetchMarineWeather(coordinates.latitude, coordinates.longitude);
+            if (marineData && marineData.waveHeight !== null) {
+                displayMarineWeather(marineData);
+                marineEmptyState.style.display = 'none';
+            } else {
+                showError('Marine weather data not available for this location. Please try a coastal city.');
+                marineEmptyState.style.display = 'block';
+            }
+            marineSearch.style.display = 'none';
+            marineWeatherCard.classList.remove('active');
         }
 
     } catch (error) {
-        console.error('Error loading default weather:', error);
-        // Show error but don't block the UI
-        showError('Failed to load default weather. Please search for a city.');
+        console.error('Error fetching weather data:', error);
+        showError(error.message || 'Failed to fetch weather data. Please try again.');
     } finally {
         hideLoading();
-        disableSearch(false);
     }
 }
 
@@ -115,60 +225,6 @@ function updateDateTime() {
         minute: '2-digit'
     };
     currentDateEl.textContent = now.toLocaleDateString('en-US', options);
-}
-
-/**
- * Handle search button click
- */
-async function handleSearch() {
-    const cityName = cityInput.value.trim();
-    
-    if (!cityName) {
-        showError('Please enter a city name or country');
-        return;
-    }
-
-    // Hide previous results and errors
-    hideAllCards();
-    hideError();
-    
-    // Show loading state
-    showLoading();
-    disableSearch(true);
-
-    try {
-        // Step 1: Geocode city name to get coordinates
-        const coordinates = await geocodeCity(cityName);
-        
-        if (!coordinates) {
-            throw new Error('City not found. Please check the spelling and try again.');
-        }
-
-        // Step 2: Fetch all weather data in parallel
-        const [currentData, historicalData, marineData] = await Promise.all([
-            fetchCurrentWeather(coordinates.latitude, coordinates.longitude),
-            fetchHistoricalWeather(coordinates.latitude, coordinates.longitude),
-            fetchMarineWeather(coordinates.latitude, coordinates.longitude)
-        ]);
-
-        // Step 3: Display all data
-        displayCurrentWeather(currentData, coordinates);
-        displayHistoricalWeather(historicalData);
-        
-        // Only show marine weather if data is available
-        if (marineData && marineData.waveHeight !== null) {
-            displayMarineWeather(marineData);
-        } else {
-            marineWeatherCard.style.display = 'none';
-        }
-
-    } catch (error) {
-        console.error('Error fetching weather data:', error);
-        showError(error.message || 'Failed to fetch weather data. Please try again.');
-    } finally {
-        hideLoading();
-        disableSearch(false);
-    }
 }
 
 /**
@@ -271,7 +327,6 @@ async function fetchMarineWeather(latitude, longitude) {
         const response = await fetch(url);
         
         if (!response.ok) {
-            // Marine data might not be available for all locations
             return null;
         }
 
@@ -290,7 +345,6 @@ async function fetchMarineWeather(latitude, longitude) {
         return null;
     } catch (error) {
         console.error('Marine weather fetch error:', error);
-        // Return null instead of throwing - marine data is optional
         return null;
     }
 }
@@ -351,9 +405,6 @@ function displayCurrentWeather(data, location) {
         ? `${location.name}, ${location.admin1}, ${location.country}`
         : `${location.name}, ${location.country}`;
     locationEl.textContent = locationName;
-    
-    // Card is always visible now
-    currentWeatherCard.style.display = 'block';
 }
 
 /**
@@ -362,12 +413,13 @@ function displayCurrentWeather(data, location) {
  */
 function displayHistoricalWeather(data) {
     if (!data || !data.time || data.time.length === 0) {
+        historicalContentEl.innerHTML = '<div class="empty-state"><p>No historical data available</p></div>';
         return;
     }
 
     historicalContentEl.innerHTML = '';
     
-    // Display last 7 days (excluding today if it's in the array)
+    // Display last 7 days
     const daysToShow = Math.min(7, data.time.length);
     
     for (let i = 0; i < daysToShow; i++) {
@@ -386,9 +438,6 @@ function displayHistoricalWeather(data) {
         
         historicalContentEl.appendChild(dayElement);
     }
-    
-    // Card is always visible now
-    historicalWeatherCard.style.display = 'block';
 }
 
 /**
@@ -410,8 +459,7 @@ function displayMarineWeather(data) {
         ? `${data.windSpeed.toFixed(1)} m` 
         : 'N/A';
     
-    // Show marine card if data is available
-    marineWeatherCard.style.display = 'block';
+    marineEmptyState.style.display = 'none';
 }
 
 /**
@@ -442,27 +490,4 @@ function showError(message) {
  */
 function hideError() {
     errorMessage.style.display = 'none';
-}
-
-/**
- * Hide all weather cards
- */
-function hideAllCards() {
-    // Don't hide cards, just clear their content
-    // Cards will be updated with new data
-}
-
-/**
- * Enable/disable search button
- * @param {boolean} disabled - Whether to disable the button
- */
-function disableSearch(disabled) {
-    searchBtn.disabled = disabled;
-    if (disabled) {
-        searchBtn.querySelector('.btn-text').style.display = 'none';
-        searchBtn.querySelector('.btn-loader').style.display = 'inline';
-    } else {
-        searchBtn.querySelector('.btn-text').style.display = 'inline';
-        searchBtn.querySelector('.btn-loader').style.display = 'none';
-    }
 }
