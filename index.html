@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App - Global Weather Forecast</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="title">🌤️ Weather App</h1>
+            <p class="subtitle">Global Weather Forecast & Historical Data</p>
+        </header>
+
+        <!-- Search Section -->
+        <section class="search-section">
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    id="cityInput" 
+                    class="search-input" 
+                    placeholder="Enter city name or country..."
+                    autocomplete="off"
+                >
+                <button id="searchBtn" class="search-btn">
+                    <span class="btn-text">Search</span>
+                    <span class="btn-loader" style="display: none;">⏳</span>
+                </button>
+            </div>
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+        </section>
+
+        <!-- Loading Indicator -->
+        <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+            <div class="spinner"></div>
+            <p>Fetching weather data...</p>
+        </div>
+
+        <!-- Current Weather Card -->
+        <section id="currentWeather" class="weather-card current-weather" style="display: none;">
+            <div class="card-header">
+                <h2>Current Weather</h2>
+                <span id="currentDate" class="date-time"></span>
+            </div>
+            <div class="weather-content">
+                <div class="main-info">
+                    <div class="temperature">
+                        <span id="temperature" class="temp-value">--</span>
+                        <span class="temp-unit">°C</span>
+                    </div>
+                    <div class="condition">
+                        <span id="weatherCondition" class="condition-text">--</span>
+                    </div>
+                </div>
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">Humidity</span>
+                        <span id="humidity" class="detail-value">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Wind Speed</span>
+                        <span id="windSpeed" class="detail-value">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Pressure</span>
+                        <span id="pressure" class="detail-value">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Location</span>
+                        <span id="location" class="detail-value">--</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Historical Weather Card -->
+        <section id="historicalWeather" class="weather-card historical-weather" style="display: none;">
+            <div class="card-header">
+                <h2>Historical Weather (Past 7 Days)</h2>
+            </div>
+            <div id="historicalContent" class="historical-content">
+                <!-- Historical data will be inserted here -->
+            </div>
+        </section>
+
+        <!-- Marine Weather Card -->
+        <section id="marineWeather" class="weather-card marine-weather" style="display: none;">
+            <div class="card-header">
+                <h2>Marine Weather</h2>
+                <span class="badge">Coastal Location</span>
+            </div>
+            <div class="marine-content">
+                <div class="marine-grid">
+                    <div class="marine-item">
+                        <span class="marine-label">Wave Height</span>
+                        <span id="waveHeight" class="marine-value">--</span>
+                    </div>
+                    <div class="marine-item">
+                        <span class="marine-label">Sea Temperature</span>
+                        <span id="seaTemperature" class="marine-value">--</span>
+                    </div>
+                    <div class="marine-item">
+                        <span class="marine-label">Wind Speed</span>
+                        <span id="marineWindSpeed" class="marine-value">--</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
