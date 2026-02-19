@@ -15,11 +15,8 @@ const historicalWeatherCard = document.getElementById('historicalWeather');
 const marineWeatherCard = document.getElementById('marineWeather');
 
 // Current Weather Elements
-const currentDateEl = document.getElementById('currentDate');
 const temperatureEl = document.getElementById('temperature');
 const weatherConditionEl = document.getElementById('weatherCondition');
-const humidityEl = document.getElementById('humidity');
-const locationEl = document.getElementById('location');
 
 // Search Elements
 const currentSearch = document.getElementById('currentSearch');
@@ -39,16 +36,13 @@ const marineSearchBtn = document.getElementById('marineSearchBtn');
 const waveHeightEl = document.getElementById('waveHeight');
 const seaTemperatureEl = document.getElementById('seaTemperature');
 const marineEmptyState = document.getElementById('marineEmptyState');
+const marineGrid = document.getElementById('marineGrid');
 
 // Track active card
 let activeCard = null;
 
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => {
-    // Set current date/time
-    updateDateTime();
-    setInterval(updateDateTime, 1000);
-
     // Make cards clickable
     setupCardInteractions();
 });
@@ -191,10 +185,10 @@ async function fetchWeatherForCard(cardType, cityName) {
             const marineData = await fetchMarineWeather(coordinates.latitude, coordinates.longitude);
             if (marineData && marineData.waveHeight !== null) {
                 displayMarineWeather(marineData);
-                marineEmptyState.style.display = 'none';
             } else {
                 showError('Marine weather data not available for this location. Please try a coastal city.');
                 marineEmptyState.style.display = 'block';
+                marineGrid.style.display = 'none';
             }
             marineSearch.style.display = 'none';
             marineWeatherCard.classList.remove('active');
@@ -208,21 +202,6 @@ async function fetchWeatherForCard(cardType, cityName) {
     }
 }
 
-/**
- * Update current date and time display
- */
-function updateDateTime() {
-    const now = new Date();
-    const options = {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    };
-    currentDateEl.textContent = now.toLocaleDateString('en-US', options);
-}
 
 /**
  * Geocode city name to get coordinates
@@ -393,12 +372,6 @@ function getWeatherCondition(code) {
 function displayCurrentWeather(data, location) {
     temperatureEl.textContent = Math.round(data.temperature_2m);
     weatherConditionEl.textContent = getWeatherCondition(data.weather_code);
-    humidityEl.textContent = `${data.relative_humidity_2m}%`;
-    
-    const locationName = location.admin1 
-        ? `${location.name}, ${location.admin1}, ${location.country}`
-        : `${location.name}, ${location.country}`;
-    locationEl.textContent = locationName;
 }
 
 /**
@@ -451,6 +424,7 @@ function displayMarineWeather(data) {
         : 'N/A';
     
     marineEmptyState.style.display = 'none';
+    marineGrid.style.display = 'flex';
 }
 
 /**

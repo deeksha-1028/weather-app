@@ -26,7 +26,6 @@
             <section id="currentWeather" class="weather-card current-weather" data-card-type="current">
                 <div class="card-header">
                     <h2>Current Weather</h2>
-                    <span id="currentDate" class="date-time"></span>
                 </div>
                 
                 <!-- Search Input (shown when card is active) -->
@@ -51,16 +50,6 @@
                             <span id="weatherCondition" class="condition-text">Click to search</span>
                         </div>
                     </div>
-                    <div class="details-grid">
-                        <div class="detail-item">
-                            <span class="detail-label">Humidity</span>
-                            <span id="humidity" class="detail-value">--</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Location</span>
-                            <span id="location" class="detail-value">--</span>
-                        </div>
-                    </div>
                 </div>
             </section>
 
@@ -68,7 +57,6 @@
             <section id="historicalWeather" class="weather-card historical-weather" data-card-type="historical">
                 <div class="card-header">
                     <h2>Historical Weather</h2>
-                    <span class="subtitle-text">Past 7 Days</span>
                 </div>
                 
                 <!-- Search Input (shown when card is active) -->
@@ -94,7 +82,6 @@
             <section id="marineWeather" class="weather-card marine-weather" data-card-type="marine">
                 <div class="card-header">
                     <h2>Marine Weather</h2>
-                    <span class="badge">Coastal Location</span>
                 </div>
                 
                 <!-- Search Input (shown when card is active) -->
@@ -110,7 +97,10 @@
                 </div>
                 
                 <div class="marine-content">
-                    <div class="marine-grid">
+                    <div class="empty-state" id="marineEmptyState">
+                        <p>Click to view marine weather</p>
+                    </div>
+                    <div class="marine-grid" id="marineGrid" style="display: none;">
                         <div class="marine-item">
                             <span class="marine-label">Wave Height</span>
                             <span id="waveHeight" class="marine-value">--</span>
@@ -119,9 +109,6 @@
                             <span class="marine-label">Sea Temperature</span>
                             <span id="seaTemperature" class="marine-value">--</span>
                         </div>
-                    </div>
-                    <div class="empty-state" id="marineEmptyState" style="display: none;">
-                        <p>Click to view marine weather</p>
                     </div>
                 </div>
             </section>
