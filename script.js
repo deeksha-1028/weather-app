@@ -33,6 +33,9 @@ const waveHeightEl = document.getElementById('waveHeight');
 const seaTemperatureEl = document.getElementById('seaTemperature');
 const marineWindSpeedEl = document.getElementById('marineWindSpeed');
 
+// Default city for initial load
+const DEFAULT_CITY = 'London';
+
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => {
     // Set current date/time
@@ -46,7 +49,57 @@ document.addEventListener('DOMContentLoaded', () => {
             handleSearch();
         }
     });
+
+    // Load default weather data on page load
+    loadDefaultWeather();
 });
+
+/**
+ * Load default weather data for initial display
+ */
+async function loadDefaultWeather() {
+    // Set default city in input
+    cityInput.value = DEFAULT_CITY;
+    
+    // Show loading state
+    showLoading();
+    disableSearch(true);
+
+    try {
+        // Geocode default city
+        const coordinates = await geocodeCity(DEFAULT_CITY);
+        
+        if (!coordinates) {
+            throw new Error('Failed to load default weather data.');
+        }
+
+        // Fetch all weather data in parallel
+        const [currentData, historicalData, marineData] = await Promise.all([
+            fetchCurrentWeather(coordinates.latitude, coordinates.longitude),
+            fetchHistoricalWeather(coordinates.latitude, coordinates.longitude),
+            fetchMarineWeather(coordinates.latitude, coordinates.longitude)
+        ]);
+
+        // Display all data
+        displayCurrentWeather(currentData, coordinates);
+        displayHistoricalWeather(historicalData);
+        
+        // Show marine weather if available, otherwise hide the card
+        if (marineData && marineData.waveHeight !== null) {
+            displayMarineWeather(marineData);
+        } else {
+            marineWeatherCard.style.display = 'none';
+        }
+
+    } catch (error) {
+        console.error('Error loading default weather:', error);
+        // Show error but don't block the UI
+        showError('Failed to load default weather. Please search for a city.');
+    } finally {
+        hideLoading();
+        disableSearch(false);
+    }
+}
 
 /**
  * Update current date and time display
@@ -105,6 +158,8 @@ async function handleSearch() {
         // Only show marine weather if data is available
         if (marineData && marineData.waveHeight !== null) {
             displayMarineWeather(marineData);
+        } else {
+            marineWeatherCard.style.display = 'none';
         }
 
     } catch (error) {
@@ -297,6 +352,7 @@ function displayCurrentWeather(data, location) {
         : `${location.name}, ${location.country}`;
     locationEl.textContent = locationName;
     
+    // Card is always visible now
     currentWeatherCard.style.display = 'block';
 }
 
@@ -331,6 +387,7 @@ function displayHistoricalWeather(data) {
         historicalContentEl.appendChild(dayElement);
     }
     
+    // Card is always visible now
     historicalWeatherCard.style.display = 'block';
 }
 
@@ -353,6 +410,7 @@ function displayMarineWeather(data) {
         ? `${data.windSpeed.toFixed(1)} m` 
         : 'N/A';
     
+    // Show marine card if data is available
     marineWeatherCard.style.display = 'block';
 }
 
@@ -390,9 +448,8 @@ function hideError() {
  * Hide all weather cards
  */
 function hideAllCards() {
-    currentWeatherCard.style.display = 'none';
-    historicalWeatherCard.style.display = 'none';
-    marineWeatherCard.style.display = 'none';
+    // Don't hide cards, just clear their content
+    // Cards will be updated with new data
 }
 
 /**
